@@ -1,0 +1,187 @@
+import { create } from 'zustand';
+import { StarRecord } from '@/data/star-catalog';
+import { DSORecord } from '@/data/dso-catalog';
+export type AppMode = 'intro' | 'skyview' | 'log' | 'settings' | 'highlights' | 'search' | 'pwa-install';
+export type PermissionStatus = 'prompt' | 'granted' | 'denied' | 'unavailable';
+export type GPSStatus = 'idle' | 'tracking' | 'error' | 'denied' | 'unavailable';
+export type LorePreference = 'western' | 'african' | 'both';
+interface Orientation {
+  alpha: number;
+  beta: number;
+  gamma: number;
+  heading: number;
+}
+
+interface TargetTelemetry {
+  angle: number;
+  onScreen: boolean;
+  azimuth: number;
+}
+
+interface AppState {
+  mode: AppMode;
+  isCalibrated: boolean;
+  calibrationProgress: number;
+  isCatalogReady: boolean;
+  catalogLoadingProgress: number;
+  preferredLore: LorePreference;
+  isObserving: boolean;
+  nightMode: boolean;
+  isSlewing: boolean;
+  magnitudeLimit: number;
+  bortleScale: number;
+  autoBortle: boolean;
+  showPlanets: boolean;
+  showISS: boolean;
+  showConstellations: boolean;
+  showBoundaries: boolean;
+  showConstellationLabels: boolean;
+  showGrid: boolean;
+  targetObject: string | null;
+  selectedStar: StarRecord | null;
+  selectedDSO: DSORecord | null;
+  orientation: Orientation;
+  isSensorActive: boolean;
+  permissionStatus: PermissionStatus;
+  gpsStatus: GPSStatus;
+  gpsEnabled: boolean;
+  isInstallable: boolean;
+  deferredPrompt: any | null;
+  isOnline: boolean;
+  calibrationOffset: number;
+  simulationTime: Date;
+  timeSpeed: number;
+  latitude: number;
+  longitude: number;
+  searchQuery: string;
+  isSearchOpen: boolean;
+  setMode: (mode: AppMode) => void;
+  setCalibrated: (status: boolean) => void;
+  setCalibrationProgress: (progress: number | ((prev: number) => number)) => void;
+  setCatalogReady: (status: boolean) => void;
+  setCatalogLoadingProgress: (progress: number) => void;
+  setPreferredLore: (lore: LorePreference) => void;
+  setObserving: (observing: boolean) => void;
+  toggleNightMode: () => void;
+  setSlewing: (slewing: boolean) => void;
+  setBortleScale: (scale: number) => void;
+  setAutoBortle: (auto: boolean) => void;
+  togglePlanets: () => void;
+  toggleISS: () => void;
+  toggleConstellations: () => void;
+  toggleBoundaries: () => void;
+  toggleConstellationLabels: () => void;
+  toggleGrid: () => void;
+  setTarget: (target: string | null) => void;
+  setSelectedStar: (star: StarRecord | null) => void;
+  setSelectedDSO: (dso: DSORecord | null) => void;
+  setOrientation: (orientation: Orientation) => void;
+  setSensorActive: (active: boolean) => void;
+  setPermissionStatus: (status: PermissionStatus) => void;
+  setGPSStatus: (status: GPSStatus) => void;
+  setGPSEnabled: (enabled: boolean) => void;
+  setInstallable: (status: boolean) => void;
+  setDeferredPrompt: (prompt: any) => void;
+  setIsOnline: (online: boolean) => void;
+  setCalibrationOffset: (offset: number) => void;
+  setSimulationTime: (time: Date) => void;
+  setTimeSpeed: (timeSpeed: number) => void;
+  setLocation: (lat: number, lon: number) => void;
+  setSearchQuery: (searchQuery: string) => void;
+  setSearchOpen: (open: boolean) => void;
+  targetTelemetry: TargetTelemetry | null;
+  setTargetTelemetry: (telemetry: TargetTelemetry | null) => void;
+}
+export const useAppStore = create<AppState>((set) => ({
+  mode: 'intro',
+  isCalibrated: false,
+  calibrationProgress: 0,
+  isCatalogReady: false,
+  catalogLoadingProgress: 0,
+  preferredLore: 'both',
+  isObserving: false,
+  nightMode: false,
+  isSlewing: false,
+  magnitudeLimit: 6.5,
+  bortleScale: 4,
+  autoBortle: true,
+  showPlanets: true,
+  showISS: true,
+  showConstellations: true,
+  showBoundaries: false,
+  showConstellationLabels: true,
+  showGrid: true,
+  targetObject: null,
+  selectedStar: null,
+  selectedDSO: null,
+  orientation: { alpha: 0, beta: 0, gamma: 0, heading: 0 },
+  isSensorActive: false,
+  permissionStatus: 'prompt',
+  gpsStatus: 'idle',
+  gpsEnabled: true,
+  isInstallable: false,
+  deferredPrompt: null,
+  isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
+  calibrationOffset: 0,
+  simulationTime: new Date(),
+  timeSpeed: 1,
+  latitude: -26.2,
+  longitude: 28.0,
+  searchQuery: '',
+  isSearchOpen: false,
+  targetTelemetry: null,
+  setMode: (mode) => set({ mode }),
+  setCalibrated: (status) => set({
+    isCalibrated: status,
+    calibrationProgress: status ? 100 : 0
+  }),
+  setCalibrationProgress: (progress) => set((state) => ({
+    calibrationProgress: typeof progress === 'function' ? progress(state.calibrationProgress) : progress
+  })),
+  setCatalogReady: (status) => set({ isCatalogReady: status }),
+  setCatalogLoadingProgress: (progress) => set({ catalogLoadingProgress: progress }),
+  setPreferredLore: (lore) => set({ preferredLore: lore }),
+  setObserving: (isObserving) => set({ isObserving }),
+  toggleNightMode: () => set((state) => ({ nightMode: !state.nightMode })),
+  setSlewing: (isSlewing) => set({ isSlewing }),
+  setBortleScale: (scale) => {
+    const mag = Math.max(3.5, 7.5 - (scale * 0.4));
+    set({ bortleScale: scale, magnitudeLimit: mag });
+  },
+  setAutoBortle: (autoBortle) => set({ autoBortle }),
+  togglePlanets: () => set((state) => ({ showPlanets: !state.showPlanets })),
+  toggleISS: () => set((state) => ({ showISS: !state.showISS })),
+  toggleConstellations: () => set((state) => ({ showConstellations: !state.showConstellations })),
+  toggleBoundaries: () => set((state) => ({ showBoundaries: !state.showBoundaries })),
+  toggleConstellationLabels: () => set((state) => ({ showConstellationLabels: !state.showConstellationLabels })),
+  toggleGrid: () => set((state) => ({ showGrid: !state.showGrid })),
+  setTarget: (target) => set({ targetObject: target }),
+  setSelectedStar: (star) => set((state) => ({
+    selectedStar: star,
+    selectedDSO: null,
+    isSlewing: star !== null && !state.isSensorActive
+  })),
+  setSelectedDSO: (dso) => set((state) => ({
+    selectedDSO: dso,
+    selectedStar: null,
+    isSlewing: dso !== null && !state.isSensorActive
+  })),
+  setOrientation: (orientation) => set({ orientation }),
+  setSensorActive: (active) => set({ isSensorActive: active }),
+  setPermissionStatus: (status) => set({ permissionStatus: status }),
+  setGPSStatus: (gpsStatus) => set({ gpsStatus }),
+  setGPSEnabled: (gpsEnabled) => set({ gpsEnabled }),
+  setInstallable: (isInstallable) => set({ isInstallable }),
+  setDeferredPrompt: (deferredPrompt) => set({ 
+    deferredPrompt, 
+    isInstallable: !!deferredPrompt 
+  }),
+  setIsOnline: (isOnline) => set({ isOnline }),
+  setCalibrationOffset: (offset) => set({ calibrationOffset: offset }),
+  setSimulationTime: (simulationTime) => set({ simulationTime }),
+  setTimeSpeed: (timeSpeed) => set({ timeSpeed }),
+  setLocation: (latitude, longitude) => set({ latitude, longitude }),
+  setSearchQuery: (searchQuery) => set({ searchQuery }),
+  setSearchOpen: (isSearchOpen) => set({ isSearchOpen }),
+  setTargetTelemetry: (telemetry) => set({ targetTelemetry: telemetry }),
+}));
